@@ -19,6 +19,8 @@ public class Config {
     public boolean fullbright = false;
     public boolean clearWeather = false;
     public boolean cinematic = false;
+    /** Locally render living entities affected by the Invisibility potion effect. */
+    public boolean antiInvis = false;
     public int tint = 0;                // index into Hud.TINTS
 
     // ---- Freecam ----

@@ -7,7 +7,7 @@ Fabric client mod for Minecraft 1.21.11. Requires Java 21, Fabric Loader 0.18+, 
 - Camera: **F6** Freecam and **Left Alt** Freelook. Camera rotation is handled on the detached camera; Freelook leaves the player rotation intact. Movement keys still move the player in Freelook. Freecam uses WASD, Space/Shift, sprint boost, and optional scroll speed.
 - HUD editor: open Right Shift → HUD → **Edit HUD layout**, then drag HUD panels. Positions save locally. Current draggable panels include Info/Coordinates, Donut Tracker, Waypoints, Spotify, Floating Lyrics, Keystrokes, Armor Status, Potion Effects, and Auction.
 - HUD modules: FPS/coordinates/direction, Keystrokes, armor durability, potion timers, earnings/balance tracker, custom crosshair, waypoint distance, and Spotify.
-- Visual settings: fullbright, clear weather, zoom with eased transitions, no hurt camera, no view bobbing, theme accents, crosshair size/gap, and first-person viewmodel X/Y/Z adjustments.
+- Visual settings: fullbright, clear weather, zoom with eased transitions, no hurt camera, no view bobbing, theme accents, crosshair size/gap, first-person viewmodel X/Y/Z adjustments, and optional visibility for entities with the Invisibility potion effect.
 - Spotify HUD: album art, track/artist/album, progress, synced/floating lyrics with fades, theme accents, and rounded panels.
 - Waypoints: enter name and coordinates under Right Shift → Points; the HUD shows a square, name, and distance. Nether distance uses the 8:1 Overworld scale. Waypoint scale is adjustable under HUD.
 - Auction tracker: set an item, starting top bid, and countdown under Right Shift → Auction. Matching payment chat lines add to the displayed top bid. This widget only reads chat; it does not issue commands or payments.
