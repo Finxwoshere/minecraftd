@@ -1,49 +1,37 @@
 # NeoClient 1.1.0
 
-Fabric client mod for Minecraft 1.21.11 (Java 21+, Fabric Loader 0.18+, Fabric API 0.141.1+).
+Fabric client mod for Minecraft 1.21.11. Requires Java 21, Fabric Loader 0.18+, and Fabric API 0.141.1+.
 
-## Features
-- Zoom on **C**, with eased FOV transitions.
-- Client-side Freecam on **F6** and Freelook on **Left Alt** (keybinds can be changed in Minecraft controls).
-- Info HUD, screen tint, cinematic bars, fullbright, and clear-weather visuals.
-- Spotify HUD with album art, track metadata, progress, synced lyrics, and floating lyrics.
-- Center-screen settings menu on **Right Shift**.
-- Local waypoints with dimension-aware distance and Nether 8:1 coordinate estimates.
-- Donut earnings tracker that totals matching chat transactions for this session, today, and the last seven days.
+## Current modules
+- ClickGUI: **Right Shift**, with Visuals, Camera, Spotify, HUD, View, Points, and Auction sections. Blue, violet, mint, and amber themes.
+- Camera: **F6** Freecam and **Left Alt** Freelook. Camera rotation is handled on the detached camera; Freelook leaves the player rotation intact. Movement keys still move the player in Freelook. Freecam uses WASD, Space/Shift, sprint boost, and optional scroll speed.
+- HUD editor: open Right Shift → HUD → **Edit HUD layout**, then drag HUD panels. Positions save locally. Current draggable panels include Info/Coordinates, Donut Tracker, Waypoints, Spotify, Floating Lyrics, Keystrokes, Armor Status, Potion Effects, and Auction.
+- HUD modules: FPS/coordinates/direction, Keystrokes, armor durability, potion timers, earnings/balance tracker, custom crosshair, waypoint distance, and Spotify.
+- Visual settings: fullbright, clear weather, zoom with eased transitions, no hurt camera, no view bobbing, theme accents, crosshair size/gap, and first-person viewmodel X/Y/Z adjustments.
+- Spotify HUD: album art, track/artist/album, progress, synced/floating lyrics with fades, theme accents, and rounded panels.
+- Waypoints: enter name and coordinates under Right Shift → Points; the HUD shows a square, name, and distance. Nether distance uses the 8:1 Overworld scale. Waypoint scale is adjustable under HUD.
+- Auction tracker: set an item, starting top bid, and countdown under Right Shift → Auction. Matching payment chat lines add to the displayed top bid. This widget only reads chat; it does not issue commands or payments.
 
-## Build on GitHub
+## Module keybinds
+Open **Options → Controls → Key Binds → NeoClient**. Assign keys to the HUD module toggles, Freecam, Freelook, Zoom, and menu. Newly added HUD-module bindings default to unbound.
 
-1. Create a new GitHub repository.
-2. Upload **the contents of this folder** to the repository root. Keep the `.github/workflows/build.yml` file and its folders.
-3. Commit and push to the default branch, or open **Actions → Build NeoClient → Run workflow**.
-4. Open the completed workflow run and download the `neoclient-jar` artifact.
-5. Use `neoclient-1.1.0.jar` from the downloaded artifact. The `-sources.jar` is not the mod file.
-6. Put the JAR in your Minecraft `mods` folder alongside Fabric Loader and Fabric API for Minecraft 1.21.11.
+## Build from GitHub
+1. Upload the contents of this project folder into the root of your GitHub repository. Keep `.github/workflows/build.yml`.
+2. Push/commit to the default branch. GitHub Actions runs **Build NeoClient** automatically; it can also be started manually from Actions.
+3. Download the `neoclient-jar` artifact from a successful run. Install `neoclient-1.1.0.jar` from it (not the `-sources.jar`) in `.minecraft/mods`.
 
-The workflow builds on GitHub-hosted Ubuntu with Java 21 and Gradle 9.2.1. Each push and manual workflow run starts a build.
+The workflow uses Java 21 and Gradle 9.2.1. Locally, run `gradle build --no-daemon` with those tools installed; output is in `build/libs/`.
 
-## Build locally
+## Spotify setup
+1. In the Spotify Developer Dashboard, register the Redirect URI exactly as `http://127.0.0.1:8888/callback`.
+2. In the client, open Right Shift → Spotify, enter that app's Client ID, and connect.
 
-Install JDK 21 and Gradle 9.2.1, then run this in the repository folder:
+Tokens are stored in Minecraft's `config/neoclient.json`. Keep that file private and never commit it.
 
-```sh
-gradle build --no-daemon
-```
+## Donut balance and auction notes
+The balance tracker reads balance snapshots from chat; it cannot query DonutSMP's private balance directly. After enabling the tracker, run the server's balance command (for example `/bal`) so the first matching message sets the baseline; later matching balance messages update the change. `balanceRegex` in `config/neoclient.json` controls the pattern and capture group 1 must contain the amount.
 
-The remapped mod JAR is written to `build/libs/neoclient-1.1.0.jar`.
+The tracker also records matching earnings lines in `config/neoclient-transactions.csv`. The auction widget uses `auctionRegex` to identify payment lines; adjust it in `config/neoclient.json` if DonutSMP's message wording differs. These regexes only observe incoming chat.
 
-## Spotify
-
-1. Create an app in the Spotify developer dashboard and enable the Web API.
-2. Add this redirect URI exactly: `http://127.0.0.1:8888/callback`.
-3. In game, open **Right Shift → Spotify**, enter the Spotify Client ID, and connect.
-
-Spotify tokens are stored in Minecraft's `config/neoclient.json`. Keep that file private and do not commit it.
-
-## Waypoints and earnings
-
-Waypoints are saved locally in `config/neoclient-waypoints.json`. Add a waypoint from **Right Shift → Waypoints** by entering its name and coordinates. The HUD shows the nearest waypoint's distance when it is in the current dimension or connected through the Overworld/Nether 8:1 scale.
-
-The earnings HUD parses transaction amounts from chat and stores them in `config/neoclient-transactions.csv`. Its default regex looks for a `+`, `earned`, `received`, or `sold` phrase followed by a dollar amount. You can customize `donutRegex` in `config/neoclient.json`; capture group 1 must contain the amount. This tracks matching chat lines while the mod is running; it cannot read the server's actual account balance.
-
-The info HUD's position can be changed with `hudX` and `hudY` in `config/neoclient.json`.
+## Fair-play scope
+The client focuses on cosmetic and informational overlays. It does not include Anti-invis or other features that reveal hidden players, bypass server rules, or automate gameplay/economy actions.
