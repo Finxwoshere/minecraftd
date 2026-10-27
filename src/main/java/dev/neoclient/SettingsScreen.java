@@ -48,6 +48,7 @@ public class SettingsScreen extends Screen {
             cycleNamed(10, "Screen tint", Hud.TINT_NAMES, () -> c.tint, v -> c.tint = v);
             toggle(11, "Donut earnings HUD", () -> c.donutHud, DonutTracker::setEnabled);
             toggle(12, "Show invisibility potion entities", () -> c.antiInvis, v -> c.antiInvis = v);
+            toggle(13, "Local-only MEDIA badge", () -> c.localMediaBadgeEnabled, v -> c.localMediaBadgeEnabled = v);
         } else if (page == 1) {
             toggle(0, "Freecam", () -> c.freecamEnabled, v -> c.freecamEnabled = v);
             toggle(1, "Freelook", () -> c.freelookEnabled, v -> c.freelookEnabled = v);

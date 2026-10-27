@@ -21,6 +21,8 @@ public class Config {
     public boolean cinematic = false;
     /** Locally render living entities affected by the Invisibility potion effect. */
     public boolean antiInvis = false;
+    /** Local cosmetic MEDIA label; never sent to the server. */
+    public boolean localMediaBadgeEnabled = true;
     public int tint = 0;                // index into Hud.TINTS
 
     // ---- Freecam ----
