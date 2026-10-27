@@ -116,7 +116,14 @@ public final class Hud {
 
     private static void armor(DrawContext g, MinecraftClient mc) {
         int x = Config.I.armorX, y = Config.I.armorY, i = 0;
-        for (net.minecraft.item.ItemStack stack : mc.player.getInventory().armor) {
+        net.minecraft.entity.EquipmentSlot[] armorSlots = {
+                net.minecraft.entity.EquipmentSlot.FEET,
+                net.minecraft.entity.EquipmentSlot.LEGS,
+                net.minecraft.entity.EquipmentSlot.CHEST,
+                net.minecraft.entity.EquipmentSlot.HEAD
+        };
+        for (net.minecraft.entity.EquipmentSlot slot : armorSlots) {
+            net.minecraft.item.ItemStack stack = mc.player.getEquippedStack(slot);
             if (stack.isEmpty()) { i++; continue; }
             int ix = x + i * 34;
             roundedFill(g, ix, y, ix + 30, y + 34, 0xA8191D24, 4);

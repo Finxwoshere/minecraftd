@@ -1,5 +1,6 @@
 package dev.neoclient;
 
+import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.text.Text;
@@ -8,7 +9,6 @@ import net.minecraft.text.Text;
 public final class HudEditorScreen extends Screen {
     private enum Part { INFO, DONUT, WAYPOINT, SPOTIFY, AUCTION, LYRICS, KEYSTROKES, ARMOR, POTIONS }
     private Part dragging;
-    private double grabX, grabY;
 
     public HudEditorScreen() { super(Text.literal("HUD Editor")); }
 
@@ -63,28 +63,31 @@ public final class HudEditorScreen extends Screen {
     } }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (button != 0) return super.mouseClicked(mouseX, mouseY, button);
+    public boolean mouseClicked(Click click, boolean doubled) {
+        double mouseX = click.x(), mouseY = click.y();
+        if (click.button() != 0) return super.mouseClicked(click, doubled);
         for (Part p : Part.values()) {
             if (mouseX >= px(p) && mouseX <= px(p) + partWidth(p) && mouseY >= py(p) && mouseY <= py(p) + partHeight(p)) {
-                dragging = p; grabX = mouseX - px(p); grabY = mouseY - py(p); return true;
+                dragging = p;
+                return true;
             }
         }
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(click, doubled);
     }
 
     @Override
-    public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
-        if (dragging == null || button != 0) return super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
-        int x = (int) Math.max(0, Math.min(width - partWidth(dragging), mouseX - grabX));
-        int y = (int) Math.max(44, Math.min(height - partHeight(dragging), mouseY - grabY));
-        setPos(dragging, x, y); return true;
+    public boolean mouseDragged(Click click, double offsetX, double offsetY) {
+        if (dragging == null || click.button() != 0) return super.mouseDragged(click, offsetX, offsetY);
+        int x = (int) Math.max(0, Math.min(width - partWidth(dragging), px(dragging) + offsetX));
+        int y = (int) Math.max(44, Math.min(height - partHeight(dragging), py(dragging) + offsetY));
+        setPos(dragging, x, y);
+        return true;
     }
 
     @Override
-    public boolean mouseReleased(double mouseX, double mouseY, int button) {
-        if (button == 0 && dragging != null) { dragging = null; Config.save(); return true; }
-        return super.mouseReleased(mouseX, mouseY, button);
+    public boolean mouseReleased(Click click) {
+        if (click.button() == 0 && dragging != null) { dragging = null; Config.save(); return true; }
+        return super.mouseReleased(click);
     }
 
     @Override public void close() { Config.save(); super.close(); }
