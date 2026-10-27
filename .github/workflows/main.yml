@@ -17,7 +17,7 @@ jobs:
         with:
           gradle-version: '9.2.1'
       - name: Build mod
-        run: gradle build --no-daemon
+       run: gradle build --refresh-dependencies --no-daemon
       - name: Upload JARs
         uses: actions/upload-artifact@v4
         with:
