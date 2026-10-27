@@ -19,6 +19,8 @@ public class Config {
     public boolean fullbright = false;
     public boolean clearWeather = false;
     public boolean cinematic = false;
+    /** Locally render living entities affected by the Invisibility potion effect. */
+    public boolean antiInvis = false;
     public int tint = 0;                // index into Hud.TINTS
 
     // ---- Freecam ----
@@ -43,12 +45,27 @@ public class Config {
     public int lyricLines = 1;          // 1 or 3
     public int lyricOffsetMs = 0;       // shift lyrics earlier/later to fix latency
     public boolean floatingLyrics = true;
-    public int floatingLyricY = 0;
+    public int floatingLyricX = -1, floatingLyricY = 0;
     public int hudX = 4, hudY = 4;
+    public int donutX = 4, donutY = 40, waypointX = 4, waypointY = 88;
+    public int spotifyX = -1, spotifyY = -1;
+    public int keystrokesX = 6, keystrokesY = 120, armorX = 6, armorY = 170, potionX = 6, potionY = 220;
+    public int accentColor = 0xFF438BCA;
+    public int theme = 0;
+    public boolean keystrokesHud = true, armorHud = true, potionHud = true, customCrosshair = false, noHurtCamera = false, noBobbing = false;
+    public int crosshairSize = 6, crosshairGap = 3, crosshairThickness = 1;
+    public float viewmodelX = 0f, viewmodelY = 0f, viewmodelZ = 0f;
+    public float waypointScale = 1.0f;
     public float hudScale = 1.0f;
     public boolean donutHud = true;
+    public boolean auctionEnabled = false;
+    public String auctionItem = "";
+    public String auctionRegex = "(?i)(?:paid|payment|bid|received).*?\\$?([0-9][0-9,]*(?:\\.[0-9]{1,2})?)";
+    public long auctionTopBidCents = 0, auctionEndEpochMs = 0;
+    public int auctionX = 6, auctionY = 270;
     // Capture group 1 must be the numeric amount from a matching server chat line.
     public String donutRegex = "(?:\\+|earned|received|sold).*?\\$([0-9][0-9,]*(?:\\.[0-9]{1,2})?)";
+    public String balanceRegex = "(?i)(?:balance|bal)[^0-9$]{0,24}\\$?([0-9][0-9,]*(?:\\.[0-9]{1,2})?)";
     public int coverSize = 48;
     public int corner = 1;              // 0 TL, 1 TR, 2 BL, 3 BR
     public int bgOpacity = 140;         // 0..255
@@ -79,6 +96,8 @@ public class Config {
     private void clamp() {
         zoomFov = Math.max(30, Math.min(110, zoomFov));
         tint = Math.max(0, Math.min(Hud.TINTS.length - 1, tint));
+        theme = Math.max(0, Math.min(3, theme));
+        accentColor = new int[]{0xFF438BCA, 0xFF9A6BFF, 0xFF45C995, 0xFFFF9E4A}[theme];
         lyricLines = lyricLines == 3 ? 3 : 1;
         coverSize = Math.max(16, Math.min(96, coverSize));
         corner = Math.max(0, Math.min(3, corner));
@@ -88,10 +107,14 @@ public class Config {
         freecamBoost = Math.max(1, Math.min(8, freecamBoost));
         bgOpacity = Math.max(0, Math.min(255, bgOpacity));
         hudScale = Math.max(0.5f, Math.min(2.0f, hudScale));
+        waypointScale = Math.max(0.5f, Math.min(2.0f, waypointScale));
         hudX = Math.max(0, Math.min(10000, hudX));
         hudY = Math.max(0, Math.min(10000, hudY));
         if (spotifyClientId == null) spotifyClientId = "";
         if (refreshToken == null) refreshToken = "";
         if (donutRegex == null || donutRegex.length() > 256) donutRegex = "";
+        if (balanceRegex == null || balanceRegex.length() > 256) balanceRegex = "";
+        if (auctionRegex == null || auctionRegex.length() > 256) auctionRegex = "";
+        if (auctionItem == null) auctionItem = "";
     }
 }

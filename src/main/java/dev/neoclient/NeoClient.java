@@ -19,6 +19,7 @@ public class NeoClient implements ClientModInitializer {
     public static final Logger LOG = LoggerFactory.getLogger("neoclient");
 
     private static KeyBinding zoomKey, menuKey, freecamKey, freelookKey;
+    private static final java.util.List<KeyBinding> moduleKeys = new java.util.ArrayList<>();
     private static boolean zooming, nightVisionByUs;
     private static int savedFov;
     private static double savedSens;
@@ -32,6 +33,7 @@ public class NeoClient implements ClientModInitializer {
         menuKey = reg("key.neoclient.menu", GLFW.GLFW_KEY_RIGHT_SHIFT, cat);
         freecamKey = reg("key.neoclient.freecam", GLFW.GLFW_KEY_F6, cat);
         freelookKey = reg("key.neoclient.freelook", GLFW.GLFW_KEY_LEFT_ALT, cat);
+        registerModuleKeys(cat);
 
         ClientTickEvents.START_CLIENT_TICK.register(NeoClient::startTick);
         ClientTickEvents.END_CLIENT_TICK.register(NeoClient::endTick);
@@ -43,7 +45,31 @@ public class NeoClient implements ClientModInitializer {
         Hud.init();
         SpotifyClient.start();
         DonutTracker.init();
+        AuctionTracker.init();
         WaypointManager.load();
+    }
+
+    private static void registerModuleKeys(KeyBinding.Category cat) {
+        String[] names = {"key.neoclient.toggle.info", "key.neoclient.toggle.coords", "key.neoclient.toggle.keystrokes", "key.neoclient.toggle.armor", "key.neoclient.toggle.potions", "key.neoclient.toggle.crosshair", "key.neoclient.toggle.fullbright", "key.neoclient.toggle.nobobbing", "key.neoclient.toggle.nohurt", "key.neoclient.toggle.spotify", "key.neoclient.toggle.donut"};
+        for (String name : names) moduleKeys.add(reg(name, GLFW.GLFW_KEY_UNKNOWN, cat));
+    }
+
+    private static void toggleModule(String key) {
+        Config c = Config.I;
+        switch (key) {
+            case "key.neoclient.toggle.info" -> c.infoHud = !c.infoHud;
+            case "key.neoclient.toggle.coords" -> c.showCoords = !c.showCoords;
+            case "key.neoclient.toggle.keystrokes" -> c.keystrokesHud = !c.keystrokesHud;
+            case "key.neoclient.toggle.armor" -> c.armorHud = !c.armorHud;
+            case "key.neoclient.toggle.potions" -> c.potionHud = !c.potionHud;
+            case "key.neoclient.toggle.crosshair" -> c.customCrosshair = !c.customCrosshair;
+            case "key.neoclient.toggle.fullbright" -> c.fullbright = !c.fullbright;
+            case "key.neoclient.toggle.nobobbing" -> c.noBobbing = !c.noBobbing;
+            case "key.neoclient.toggle.nohurt" -> c.noHurtCamera = !c.noHurtCamera;
+            case "key.neoclient.toggle.spotify" -> c.spotifyEnabled = !c.spotifyEnabled;
+            case "key.neoclient.toggle.donut" -> DonutTracker.setEnabled(!c.donutHud);
+        }
+        Config.save();
     }
 
     private static KeyBinding reg(String name, int key, KeyBinding.Category cat) {

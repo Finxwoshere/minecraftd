@@ -45,7 +45,12 @@ public final class Hud {
             g.drawCenteredTextWithShadow(mc.textRenderer, label, sw / 2, ly, 0xFFFFFFFF);
         }
         if (c.infoHud) info(g, mc);
+        if (c.keystrokesHud) keystrokes(g, mc);
+        if (c.armorHud) armor(g, mc);
+        if (c.potionHud) potions(g, mc);
+        if (c.customCrosshair) crosshair(g, sw, sh);
         if (c.donutHud) donut(g, mc, sw, sh);
+        if (c.auctionEnabled) auction(g, mc);
         waypoint(g, mc);
         if (c.spotifyEnabled) spotify(g, mc, sw, sh);
         if (c.spotifyEnabled && c.showLyrics && c.floatingLyrics) floatingLyrics(g, mc, sw, sh);
@@ -64,41 +69,127 @@ public final class Hud {
         }
         if (idx < 0) return;
         String current = lines.get(idx).text();
-        int alpha = 0xFF;
-        if (idx + 1 < lines.size()) {
-            long remaining = lines.get(idx + 1).timeMs() - t;
-            if (remaining < 350) alpha = (int) (0xFF * Math.max(0.35, remaining / 350.0));
-        }
+        long start = lines.get(idx).timeMs();
+        long next = idx + 1 < lines.size() ? lines.get(idx + 1).timeMs() : start + 4000;
+        double fadeIn = Math.min(1.0, Math.max(0.0, (t - start) / 220.0));
+        double fadeOut = Math.min(1.0, Math.max(0.0, (next - t) / 260.0));
+        int alpha = (int) (255 * Math.min(fadeIn, fadeOut));
         int y = c.floatingLyricY > 0 ? c.floatingLyricY : sh - 54;
         String shown = mc.textRenderer.trimToWidth(current, Math.max(80, sw - 32));
         int width = mc.textRenderer.getWidth(shown);
-        g.fill(sw / 2 - width / 2 - 10, y - 4, sw / 2 + width / 2 + 10, y + 13, 0x78000000);
-        g.drawCenteredTextWithShadow(mc.textRenderer, shown, sw / 2, y, (alpha << 24) | 0xFFFFFF);
+        int cx = c.floatingLyricX >= 0 ? c.floatingLyricX + width / 2 : sw / 2;
+        roundedFill(g, cx - width / 2 - 10, y - 4, cx + width / 2 + 10, y + 13, ((alpha * 120 / 255) << 24) | (c.accentColor & 0x00FFFFFF), 5);
+        g.drawCenteredTextWithShadow(mc.textRenderer, shown, cx, y, (alpha << 24) | 0xFFFFFF);
     }
 
     private static void donut(DrawContext g, MinecraftClient mc, int sw, int sh) {
         TextRenderer tr = mc.textRenderer;
         Config c = Config.I;
-        int x = c.hudX;
-        int y = c.hudY + (c.infoHud ? 36 : 0);
-        String[] lines = {"Donut earnings", "Session  " + money(DonutTracker.sessionCents()),
+        int x = c.donutX;
+        int y = c.donutY;
+        String[] lines = {"Donut balance", DonutTracker.balanceChangeLabel(), "Session  " + money(DonutTracker.sessionCents()),
                 "Today     " + money(DonutTracker.todayCents()), "7 days   " + money(DonutTracker.weekCents())};
         int w = 0;
         for (String line : lines) w = Math.max(w, tr.getWidth(line));
-        g.fill(x - 3, y - 3, x + w + 5, y + lines.length * 10 + 2, 0xA8191D24);
-        g.fill(x - 3, y - 3, x - 1, y + lines.length * 10 + 2, 0xFF438BCA);
+        roundedFill(g, x - 3, y - 3, x + w + 5, y + lines.length * 10 + 2, 0xA8191D24, 5);
+        g.fill(x - 3, y, x - 1, y + lines.length * 10 - 1, Config.I.accentColor);
         for (int i = 0; i < lines.length; i++) g.drawTextWithShadow(tr, lines[i], x, y + i * 10, i == 0 ? 0xFF76C7FF : 0xFFE8E8E8);
     }
 
+
+    private static void keystrokes(DrawContext g, MinecraftClient mc) {
+        Config c = Config.I;
+        int x = c.keystrokesX, y = c.keystrokesY, cell = 18, gap = 2;
+        drawKey(g, mc, "W", x + cell + gap, y, mc.options.forwardKey.isPressed(), cell);
+        drawKey(g, mc, "A", x, y + cell + gap, mc.options.leftKey.isPressed(), cell);
+        drawKey(g, mc, "S", x + cell + gap, y + cell + gap, mc.options.backKey.isPressed(), cell);
+        drawKey(g, mc, "D", x + (cell + gap) * 2, y + cell + gap, mc.options.rightKey.isPressed(), cell);
+        drawKey(g, mc, "JUMP", x, y + (cell + gap) * 2, mc.options.jumpKey.isPressed(), cell * 3 + gap * 2);
+        String mouse = "LMB " + (mc.options.attackKey.isPressed() ? "●" : "○") + "   RMB " + (mc.options.useKey.isPressed() ? "●" : "○");
+        g.drawTextWithShadow(mc.textRenderer, mouse, x, y + (cell + gap) * 3, 0xFFE8EDF4);
+    }
+
+    private static void drawKey(DrawContext g, MinecraftClient mc, String label, int x, int y, boolean down, int size) {
+        roundedFill(g, x, y, x + size, y + size, down ? Config.I.accentColor : 0xC0191D24, 3);
+        g.drawCenteredTextWithShadow(mc.textRenderer, label, x + size / 2, y + (size - 8) / 2, 0xFFFFFFFF);
+    }
+
+    private static void armor(DrawContext g, MinecraftClient mc) {
+        int x = Config.I.armorX, y = Config.I.armorY, i = 0;
+        for (net.minecraft.item.ItemStack stack : mc.player.getInventory().armor) {
+            if (stack.isEmpty()) { i++; continue; }
+            int ix = x + i * 34;
+            roundedFill(g, ix, y, ix + 30, y + 34, 0xA8191D24, 4);
+            g.drawItem(stack, ix + 7, y + 2);
+            int max = stack.getMaxDamage();
+            String text = max > 0 ? Math.round((1f - (float) stack.getDamage() / max) * 100) + "%" : "";
+            g.drawCenteredTextWithShadow(mc.textRenderer, text, ix + 15, y + 22, 0xFFFFFFFF);
+            i++;
+        }
+    }
+
+    private static void potions(DrawContext g, MinecraftClient mc) {
+        int x = Config.I.potionX, y = Config.I.potionY, row = 0;
+        for (net.minecraft.entity.effect.StatusEffectInstance effect : mc.player.getStatusEffects()) {
+            String name = effect.getEffectType().value().getName().getString();
+            if (effect.getAmplifier() > 0) name += " " + (effect.getAmplifier() + 1);
+            int seconds = Math.max(0, effect.getDuration() / 20);
+            String line = mc.textRenderer.trimToWidth(name + "  " + (seconds / 60) + ":" + String.format(Locale.ROOT, "%02d", seconds % 60), 150);
+            roundedFill(g, x, y + row * 13, x + mc.textRenderer.getWidth(line) + 12, y + row * 13 + 12, 0xA8191D24, 3);
+            g.drawTextWithShadow(mc.textRenderer, line, x + 6, y + row * 13 + 2, 0xFFE8EDF4);
+            row++;
+            if (row >= 8) break;
+        }
+    }
+
+    private static void crosshair(DrawContext g, int sw, int sh) {
+        Config c = Config.I;
+        int cx = sw / 2, cy = sh / 2, t = Math.max(1, c.crosshairThickness), size = Math.max(2, c.crosshairSize), gap = Math.max(1, c.crosshairGap);
+        int color = c.accentColor;
+        g.fill(cx - t / 2, cy - size - gap, cx + (t + 1) / 2, cy - gap, color);
+        g.fill(cx - t / 2, cy + gap + 1, cx + (t + 1) / 2, cy + gap + size + 1, color);
+        g.fill(cx - size - gap, cy - t / 2, cx - gap, cy + (t + 1) / 2, color);
+        g.fill(cx + gap + 1, cy - t / 2, cx + gap + size + 1, cy + (t + 1) / 2, color);
+    }
+
+    private static void roundedFill(DrawContext g, int x1, int y1, int x2, int y2, int color, int radius) {
+        int r = Math.min(radius, Math.min((x2 - x1) / 2, (y2 - y1) / 2));
+        for (int row = 0; row < r; row++) {
+            int inset = (int) Math.ceil(r - Math.sqrt(r * r - (r - row) * (r - row)));
+            g.fill(x1 + inset, y1 + row, x2 - inset, y1 + row + 1, color);
+            g.fill(x1 + inset, y2 - row - 1, x2 - inset, y2 - row, color);
+        }
+        g.fill(x1, y1 + r, x2, y2 - r, color);
+    }
     private static String money(long cents) {
         return String.format(Locale.ROOT, "$%,d.%02d", cents / 100, Math.abs(cents % 100));
     }
 
+
+    private static void auction(DrawContext g, MinecraftClient mc) {
+        Config c = Config.I;
+        int x = c.auctionX, y = c.auctionY;
+        String item = mc.textRenderer.trimToWidth(c.auctionItem.isBlank() ? "Auction" : c.auctionItem, 170);
+        String top = "Top bid  " + AuctionTracker.money();
+        int w = Math.max(mc.textRenderer.getWidth(item), mc.textRenderer.getWidth(top)) + 16;
+        roundedFill(g, x, y, x + w, y + 39, 0xD8191D24, 6);
+        g.fill(x, y + 4, x + 2, y + 35, c.accentColor);
+        g.drawTextWithShadow(mc.textRenderer, item, x + 8, y + 5, 0xFFFFFFFF);
+        g.drawTextWithShadow(mc.textRenderer, top, x + 8, y + 17, 0xFFE3EAF2);
+        g.drawTextWithShadow(mc.textRenderer, "Time  " + AuctionTracker.status(), x + 8, y + 28, 0xFFB3C1D1);
+    }
     private static void waypoint(DrawContext g, MinecraftClient mc) {
         String label = WaypointManager.nearestLabel(mc);
         if (label.isEmpty()) return;
-        int y = Config.I.hudY + (Config.I.infoHud ? 36 : 0) + (Config.I.donutHud ? 48 : 0);
-        g.drawTextWithShadow(mc.textRenderer, "Waypoint  " + label, Config.I.hudX, y, 0xFFFFD36A);
+        int y = Config.I.waypointY;
+        int x = Config.I.waypointX;
+        var matrices = g.getMatrices();
+        matrices.pushMatrix();
+        matrices.translate(x, y);
+        matrices.scale(Config.I.waypointScale, Config.I.waypointScale);
+        g.fill(0, 3, 6, 9, Config.I.accentColor);
+        g.drawTextWithShadow(mc.textRenderer, label, 10, 0, 0xFFFFD36A);
+        matrices.popMatrix();
     }
     // ---------------------------------------------------------------- info HUD
     private static void info(DrawContext g, MinecraftClient mc) {
@@ -114,7 +205,7 @@ public final class Hud {
         int w = 0;
         for (String s : l) w = Math.max(w, tr.getWidth(s));
         int x = Config.I.hudX, y = Config.I.hudY;
-        g.fill(x - 2, y - 2, x + w + 2, y + l.size() * 10 + 1, 0x90000000);
+        roundedFill(g, x - 2, y - 2, x + w + 2, y + l.size() * 10 + 1, 0x90000000, 4);
         for (int i = 0; i < l.size(); i++) g.drawTextWithShadow(tr, l.get(i), x, y + i * 10, color(i));
     }
 
@@ -160,12 +251,12 @@ public final class Hud {
         int lyH = lyRows > 0 ? lyRows * 12 + 8 : 0;
         int totalH = panelH + (lyH > 0 ? 3 + lyH : 0);
 
-        int x = (c.corner % 2 == 0) ? 6 : sw - 6 - W;
-        int y = c.corner < 2 ? 6 : sh - 6 - totalH;
+        int x = c.spotifyX >= 0 ? c.spotifyX : ((c.corner % 2 == 0) ? 6 : sw - 6 - W);
+        int y = c.spotifyY >= 0 ? c.spotifyY : (c.corner < 2 ? 6 : sh - 6 - totalH);
         int bg = (c.bgOpacity & 0xFF) << 24;
 
-        g.fill(x, y, x + W, y + panelH, bg);
-        g.fill(x, y, x + 2, y + panelH, GREEN);
+        roundedFill(g, x, y, x + W, y + panelH, bg, 6);
+        g.fill(x, y, x + 2, y + panelH, c.accentColor);
 
         if (cover > 0) {
             g.drawTexture(RenderPipelines.GUI_TEXTURED, SpotifyClient.COVER_ID,
@@ -203,7 +294,7 @@ public final class Hud {
         if (lyH > 0) {
             int ly0 = y + panelH + 3;
             int cx = x + W / 2;
-            g.fill(x, ly0, x + W, ly0 + lyH, bg);
+            roundedFill(g, x, ly0, x + W, ly0 + lyH, bg, 5);
             List<SpotifyClient.Line> ly = SpotifyClient.lyrics;
             if (ly.isEmpty()) {
                 String s = SpotifyClient.lyricsLoading ? "Loading lyrics..." : "No synced lyrics found";
